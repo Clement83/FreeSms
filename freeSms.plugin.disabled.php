@@ -5,22 +5,27 @@
 @link http://quintard.me
 @licence CC by nc sa
 @version 1.0.0
-@description Permet l'envoi d'alert SMS pour les aboner free moble
+@description Permet l'envoi d'alert SMS pour les abonnés free mobile
 */
 
-//Si vous utiliser la base de donnees a ajouter
-//include('freeSmsConfig.class.php');
 
-//Cette fonction va generer un nouveau element dans le menu
-function freeSms_plugin_menu(&$menuItems){
-	global $_;
-	$menuItems[] = array('sort'=>10,'content'=>'<a href="index.php?module=freeSms"><i class="icon-th-large"></i> Config/Envois SMS </a>');
+
+
+
+function freeSms_vocal_command(&$response,$actionUrl){
+	global $conf;
+	
+	$response['commands'][] = array(
+		'command'=>$conf->get('VOCAL_ENTITY_NAME').' test envoie sms',
+		'url'=>$actionUrl.'?action=freeSms_sendSms&message=hello_bobby','confidence'=>'0.88'
+		);
+		
 }
 
-//Cette fonction va generer une page quand on clique sur Modele dans menu
-function freeSms_plugin_page($_){
+function freeSms_plugin_page(){
 	global $_,$conf;
-	if(isset($_['module']) && $_['module']=='freeSms'){
+	
+	if(isset($_['section']) && $_['section']=='preference' && @$_['block']=='freeSms'){
 	?>
 
 	<div class="span12">
@@ -60,7 +65,7 @@ function freeSms_action()
 			$conf->put('plugin_freesmsm_identifiant',$_['identifiant']);
 			$conf->put('plugin_freesmsm_password',$_['password']);
 			
-			header('location:index.php?module=freeSms');
+			header('location:setting.php?section=preference&block=freeSms');
 		break;
 
 		case 'freeSms_sendSms':
@@ -85,12 +90,12 @@ function freeSms_action()
 				
 				if($_['test']==1)
 				{
-					header('location:index.php?module=freeSms');
+					header('location:setting.php?section=preference&block=freeSms');
 				}
 				else 
 				{			
 					$response = array('responses'=>array(
-												array('type'=>'sound','file'=>$_['sound'])
+								array('type'=>'talk','sentence'=>'Test OK, tu peux regarder ton iphone. quéqué')
 															)
 										);
 					$json = json_encode($response);
@@ -107,10 +112,21 @@ function freeSms_action()
 	}
 }
 
-Plugin::addCss("/css/style.css"); 
-//Plugin::addJs("/js/main.js"); 
 
-Plugin::addHook("menubar_pre_home", "freeSms_plugin_menu");  
-Plugin::addHook("home", "freeSms_plugin_page");  
+function freeSms_plugin_preference_menu(){
+	global $_;
+	echo '<li '.(@$_['block']=='freeSms'?'class="active"':'').'><a  href="setting.php?section=preference&block=freeSms"><i class="icon-chevron-right"></i>Config/Envois SMS</a></li>';
+}
+
+Plugin::addCss("/css/style.css"); 
+// Plugin::addJs("/js/main.js"); 
+
+// Plugin::addHook("menubar_pre_home", "freeSms_plugin_menu");  
+
+Plugin::addHook("preference_menu", "freeSms_plugin_preference_menu"); 
+Plugin::addHook("preference_content", "freeSms_plugin_page");
+
+// Plugin::addHook("home", "freeSms_plugin_page");  
 Plugin::addHook("action_post_case", "freeSms_action"); 
+Plugin::addHook("vocal_command", "freeSms_vocal_command");
 ?>
